@@ -52,7 +52,7 @@ const uint32_t DEFAULT_NITERS2 = 500;
 
 const char *ACGT = "ACGT";
 const char *TAG_FA = "FA";
-char UMI_SEPARATOR = '#';   // default UMI separator (can be changed with -U)
+char UMI_SEPARATOR = '#';   // default UMI separator (can be changed with -P)
 
 bool ispowerof2(int n) {
     return 0 == (n & (n-1));
