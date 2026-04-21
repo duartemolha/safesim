@@ -52,6 +52,7 @@ const uint32_t DEFAULT_NITERS2 = 500;
 
 const char *ACGT = "ACGT";
 const char *TAG_FA = "FA";
+char UMI_SEPARATOR = '#';   // default UMI separator (can be changed with -U)
 
 bool ispowerof2(int n) {
     return 0 == (n & (n-1));
@@ -74,7 +75,7 @@ uint32_t hashes2hash(std::vector<uint32_t>  hashes) {
 
 double umistr2prob(uint32_t &umihash, uint32_t randseed, uint32_t begpos, uint32_t endpos, const char *str) {
     
-    const char *umistr1 = strchr(str, '#');
+    const char *umistr1 = strchr(str, UMI_SEPARATOR);
     const char *umistr = (NULL == umistr1 ? str : (umistr1 + 1));
     
     std::vector<uint32_t>  hashes;
@@ -287,14 +288,15 @@ void help(int argc, char **argv, int exit_code) {
     fprintf(stdout, " -F allele fraction TAG in the VCF file. " "[default to FA].\n");
     fprintf(stdout, " -S sample name used for the -F command-line parameter. "
                     "The special values NULL pointer, empty-string, and INFO mean using the INFO column instead of the FORMAT column." "[default to NULL pointer].\n");
-    
+    fprintf(stdout, " -P The symbol '%c' denotes the start of UMI sequence (configurable with -P) so that any string before it is discarded.\n", UMI_SEPARATOR);
+
     fprintf(stdout, "Note:\n");
     fprintf(stdout, "Reads in <OUTPUT-R1-FASTQ> and <OUTPUT-R2-FASTQ> are not in the same order, so these output FASTQ files have to be sorted using a tool such as fastq-sort before being aligned again, as most aligners such as BWA and Bowtie2 require reads in the R1 and R2 files to be in the same order (This is VERY IMPORTANT!).\n");
     fprintf(stdout, "<INPUT-BAM> and <INPUT-VCF> both have to be sorted and indexed.\n");
     fprintf(stdout, "To detect UMI, this prgram first checks for the MI tag in each alignment record in <INPUT-BAM>. If the MI tag is absent, then the program checks for the string after the number-hash-pound sign (#) in the read name (QNAME).\n");
     fprintf(stdout, "Each variant record in the INPUT-VCF needs to have only one variant, it cannot be multiallelic.\n");
     fprintf(stdout, "Currently, the simulation of insertion/deletion variants causes longer/shorter-than-expected lengths of read template sequences due to preservation of alignment start and end positions on the reference genome.\n");
-    fprintf(stdout, "The symbol '#' denotes the start of UMI sequence so that any string before the '#' symbol is discarded.\n");
+    fprintf(stdout, "The symbol '%c' denotes the start of UMI sequence so that any string before the '%c' symbol is discarded.\n", UMI_SEPARATOR, UMI_SEPARATOR);
     fprintf(stdout, "The symbol '+' in a UMI sequence means that the UMI is a duplex, so the substrings before/after the '+' symbol are respectively the alpha/beta tags.\n");
     fprintf(stdout, "The BAM tag MI has special meaning as mentioned in the BAM file format specification."
            "Therefore, for each BAM record, this program first searches for the MI tag. If the MI tag is not found, then this program uses the read name QNAME as the string containing UMI sequence.\n");
@@ -323,7 +325,7 @@ main(int argc, char **argv) {
     bool is_always_log = false;
     double powerlaw_exponent = DEFAULT_POWER_LAW_EXPONENT;
     double lognormal_disp = DEFAULT_LOGNORMAL_DISP;
-    while ((opt = getopt(argc, argv, "h0:1:2:b:f:i:p:q:s:v:x:A:B:C:F:L:S:")) != -1) {
+    while ((opt = getopt(argc, argv, "h0:1:2:b:f:i:p:q:s:v:x:A:B:C:F:L:S:P:")) != -1) {
         switch (opt) {
             case 'h': help(argc, argv, 0);
             case '0': r0outfq = optarg; break;
@@ -343,6 +345,7 @@ main(int argc, char **argv) {
             case 'F': tagFA = optarg; break;
             case 'L': is_always_log = true; break; // developer debug-mode flag which is not on the cmd-line help
             case 'S': tagsample = optarg; break;
+            case 'P': UMI_SEPARATOR = optarg[0]; break;
             default: help(argc, argv, -1);
         }
     }

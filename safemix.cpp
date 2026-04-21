@@ -10,6 +10,9 @@
 #include <math.h>
 #include <unistd.h>
 
+char UMI_SEPARATOR = '#';   // default UMI separator (change with -P)
+
+
 #if defined(__cplusplus) && (__cplusplus >= 201103L)
 const char *GIT_DIFF_FULL =
 #include "gitdiff.txt"
@@ -26,7 +29,7 @@ bool ispowerof2(int n) {
 }
 
 double umistr2prob(const char *str, uint32_t pos, uint32_t isize, uint32_t randseed) {
-    const char *umistr1 = strchr(str, '#');
+    const char *umistr1 = strchr(str, UMI_SEPARATOR);
     const char *umistr = (NULL == umistr1 ? str : umistr1);
     uint32_t k1 = __ac_Wang_hash(__ac_X31_hash_string(umistr) ^ randseed);
     uint32_t k2 = __ac_Wang_hash(pos);
@@ -70,7 +73,7 @@ void help(int argc, char **argv, int exit_code) {
     fprintf(stdout, "  -r <random-seed-for-initial-quantity> random seed used to select the UMI from the initial quantity of DNA [default to %d]\n", arg_default_vals.r);
     fprintf(stdout, "  -s <random-seed-for-umi-size>\n random seed used to select the reads in each UMI [default to %d]\n",  arg_default_vals.s);
     fprintf(stdout, "  -U <use-only-umi>\n set the program to use only UMIs for identifying read families (discard read start and end positions) [default to unset]\n");
-    
+    fprintf(stdout, "  -P The symbol '%c' denotes the start of UMI sequence (configurable with -P) so that any string before it is discarded.\n", UMI_SEPARATOR);
     fprintf(stdout, "Note:\n");
     fprintf(stdout, "<tumor-INPUT-BAM> and <normal-INPUT-BAM> both have to be sorted and indexed.\n");
     fprintf(stdout, "To detect UMI, this prgram first checks for the MI tag in each alignment record in <tumor-INPUT-BAM> and <normal-INPUT-BAM>. If the MI tag is absent, then the program checks for the string after the number-hash-pound sign (#) in the read name (QNAME).\n");
@@ -100,7 +103,7 @@ main(int argc, char **argv) {
     uint32_t randseed2 = arg_default_vals.s;
     int use_only_umi = 0;
     
-    while ((opt = getopt(argc, argv, "ha:b:d:e:f:i:j:o:r:s:U")) != -1) {
+    while ((opt = getopt(argc, argv, "ha:b:d:e:f:i:j:o:r:s:U:P:")) != -1) {
         switch (opt) {
             case 'h': help(argc, argv, 0);
             case 'a': tbam = optarg; break;
@@ -114,6 +117,7 @@ main(int argc, char **argv) {
             case 'r': randseed1 = atoi(optarg); break;
             case 's': randseed2 = atoi(optarg); break;
             case 'U': use_only_umi = 1; break;
+            case 'P': UMI_SEPARATOR = optarg[0]; break;
             default: help(argc, argv, -1);
         }
     }
